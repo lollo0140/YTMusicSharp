@@ -34,9 +34,16 @@ YTMusicSharp ytClient = new YTMusicSharp(
 JsonObject homeData = await ytClient.BrowseEndpoint.FetchHomeSections();
 ```
 
-## Contributing
+## Roadmap
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- [ ] **Client Settings**: Customizable configuration for the API client.
+- [ ] **Caching System**: Implement a robust caching mechanism for improved performance.
+- [ ] **Interactions**:
+    like
+    - [ ] Like/Unlike songs and albums.
+    - [ ] Add/Remove tracks from playlists.
+- [ ] **Download Stream**: Support for fetching and downloading audio streams.
+- [ ] **Song History**: Track and manage user listening history.
 
 ## License
 
