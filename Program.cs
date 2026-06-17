@@ -7,7 +7,7 @@ using YoutubeMusic;
 string path = "D:\\COSE PRODUTTIVE\\CODING\\repos\\repos\\.NET\\LOLLOMUSICX";
 JsonNode headers = JsonNode.Parse(File.ReadAllText("./cookies.json"))!;
 
-YTmusicApi ytClient = new YTmusicApi(
+YTMusicSharp ytClient = new YTMusicSharp(
     workspacePath: path,
     youtubHeaders: (JsonObject)headers
 );

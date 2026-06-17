@@ -25,7 +25,7 @@ namespace YoutubeMusic
             Podcasts
         }
 
-    public class YTmusicApi
+    public class YTMusicSharp
     {
 
         readonly string workspacePath;
@@ -42,7 +42,7 @@ namespace YoutubeMusic
         public Library LibraryEndpoint { get; }
 
         //initialization
-        public YTmusicApi(string workspacePath, JsonObject? youtubHeaders = null)
+        public YTMusicSharp(string workspacePath, JsonObject? youtubHeaders = null)
         {
             this.workspacePath = Path.Combine(workspacePath, "musicSharpData");
             this.headersPath = Path.Combine(this.workspacePath, "headers.json");
