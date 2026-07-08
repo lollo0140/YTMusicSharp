@@ -16,7 +16,7 @@ YTMusicSharp ytClient = new YTMusicSharp(
 
 
 
-JsonObject lib = await ytClient.BrowseEndpoint.FetchHomeSections();
+JsonObject lib = await ytClient.BrowseEndpoint.FetchPlaylistData("VLPLy5pUd6-NNXvxa3jBIHXyyS5LQGxudfiM");
 
 string serializeContent = JsonSerializer.Serialize(lib);
 File.WriteAllText("./test.json", serializeContent);

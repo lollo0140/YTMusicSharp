@@ -108,6 +108,7 @@ namespace YoutubeMusic
 
             JsonObject cardRender = new JsonObject();
             JsonArray musicShefls = [];
+            JsonArray itemSections = [];
 
 
             //return inizialization
@@ -129,8 +130,15 @@ namespace YoutubeMusic
                     {
                         musicShefls.Add(obj.DeepClone());
                     }
+                    else if (obj.ContainsKey("itemSectionRenderer"))
+                    {
+                        itemSections.Add(obj.DeepClone());
+                    }
                 }
             }
+
+
+
 
             //parsing card render
             if (cardRender != null)
@@ -189,6 +197,35 @@ namespace YoutubeMusic
 
 
             }
+
+
+            //parsing single elements
+            JsonArray parsedSingleElements = [];
+            JsonObject singleItemsSection = new JsonObject();
+
+
+            foreach (JsonObject? item in itemSections)
+            {
+
+
+                if (item?["itemSectionRenderer"]?["contents"]?[0] != null)
+                {
+
+                    JsonObject? ListElement = (JsonObject?)item?["itemSectionRenderer"]?["contents"]?[0];
+
+                    if (ListElement != null && ListElement.ContainsKey("musicResponsiveListItemRenderer"))
+                    {
+                        parsedSingleElements.Add(Parsing.ParseMusicResponsiveListItemRenderer((JsonObject)ListElement["musicResponsiveListItemRenderer"]!));
+                    }
+                }
+            }
+
+            singleItemsSection["sectionTitle"] = "More results";
+            singleItemsSection["content"] = parsedSingleElements;
+
+            parsedSections.Add(singleItemsSection);
+
+
 
             searchResult["sections"] = parsedSections;
 

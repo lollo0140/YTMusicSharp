@@ -25,6 +25,13 @@ namespace YoutubeMusic
             Podcasts
         }
 
+    public enum LikeStatus
+    {
+        LIKE,
+        DISLIKE,
+        NEUTRAL
+    }
+
     public class YTMusicSharp
     {
 
@@ -40,6 +47,8 @@ namespace YoutubeMusic
         public Search SearchEndpoint { get; }
         public Browse BrowseEndpoint { get; }
         public Library LibraryEndpoint { get; }
+        public Interactions InteractionsEndpoint { get; }
+
 
         //initialization
         public YTMusicSharp(string workspacePath, JsonObject? youtubHeaders = null)
@@ -70,6 +79,7 @@ namespace YoutubeMusic
             this.SearchEndpoint = new Search(this.youtubHeaders!);
             this.BrowseEndpoint = new Browse(this.youtubHeaders!);
             this.LibraryEndpoint = new Library(this.youtubHeaders!);
+            this.InteractionsEndpoint = new Interactions(this.youtubHeaders!);
             ytWriteLine("api ready to use");
         }
 
@@ -135,12 +145,14 @@ namespace YoutubeMusic
 
             public async Task<JsonArray> GetSearchSugg(string input)
             {
-                return await YTsearch.GetSearchSuggestions(input, youtubHeaders);
+                string parsedString = input.Replace(" ", "-");
+                return await YTsearch.GetSearchSuggestions(parsedString, youtubHeaders);
             }
 
             public async Task<JsonObject> GenericSearch(string query)
             {
-                return await YTsearch.Search(query, youtubHeaders);
+                string parsedString = query.Replace(" ", "-");
+                return await YTsearch.Search(parsedString, youtubHeaders);
             }
 
             public async Task<JsonObject> SpecificSearch(string query, ContentType contentType)
@@ -150,8 +162,8 @@ namespace YoutubeMusic
                 {
                     return [];
                 }
-
-                return await YTsearch.SpecificSearch(query, youtubHeaders, contentType: contentType);
+                string parsedString = query.Replace(" ", "-");
+                return await YTsearch.SpecificSearch(parsedString, youtubHeaders, contentType: contentType);
 
             }
 
@@ -223,6 +235,31 @@ namespace YoutubeMusic
             public async Task<JsonObject> GetLibraryContent(ContentFilter filter)
             {
                 return await LibraryData.GetUserContentByFilter( youtubHeaders, filter);
+            }
+
+        }
+
+        public class Interactions
+        {
+            private JsonObject? youtubHeaders;
+            internal Interactions(JsonObject headers)
+            {
+                youtubHeaders = headers;
+            }
+
+            public async void SetSongLikeStatus(string id, LikeStatus likeStatus)
+            {
+                await SongsInteractions.SetSongLikeStatus(id, likeStatus, youtubHeaders);
+            }
+
+            public async void SetArtistSubscription(string browseId, bool subscribe)
+            {
+                await ArtistInteraction.SetArtistSubscriptionStatus(browseId, subscribe, youtubHeaders);
+            }
+
+            public async void SetPlaylistSave(string browseId, bool save)
+            {
+                await AlbumInteractions.SetPlaylistSaveStatus(browseId, save, youtubHeaders);
             }
 
         }

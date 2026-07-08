@@ -37,6 +37,11 @@ namespace YoutubeMusic
             //PARSING HEADER ---------------
             JsonObject parsedPageHeader = await ParseArtistHeader((JsonObject?)result?["header"]?["musicImmersiveHeaderRenderer"]);
 
+            JsonObject parsedSections = new JsonObject();
+            if (parsedPageHeader != null)
+            {
+                parsedSections["header"] = parsedPageHeader;
+            }
 
 
 
@@ -44,7 +49,7 @@ namespace YoutubeMusic
 
             JsonArray? sectionTab = (JsonArray?)result?["contents"]?["singleColumnBrowseResultsRenderer"]?["tabs"]?[0]?["tabRenderer"]?["content"]?["sectionListRenderer"]?["contents"];
 
-            JsonObject parsedSections = new JsonObject();
+
 
             if (sectionTab != null)
             {
