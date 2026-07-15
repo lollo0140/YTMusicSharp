@@ -17,13 +17,13 @@ namespace YoutubeMusic
     }
 
     public enum ContentFilter
-        {
-            Albums,
-            Playlists,
-            Artists,
-            Subscribed,
-            Podcasts
-        }
+    {
+        Albums,
+        Playlists,
+        Artists,
+        Subscribed,
+        Podcasts
+    }
 
     public enum LikeStatus
     {
@@ -32,11 +32,23 @@ namespace YoutubeMusic
         NEUTRAL
     }
 
+    public enum DB_filter
+    {
+        ALBUM,
+        PLAYLIST,
+        ARTIST,
+        LIBRARY,
+        CACHEDSONG,
+        DOWNLOADED
+    }
+
+
+
     public class YTMusicSharp
     {
 
-        readonly string workspacePath;
 
+        readonly string workspacePath;
 
         private readonly string headersPath;
         private readonly JsonObject? youtubHeaders;
@@ -57,7 +69,30 @@ namespace YoutubeMusic
             this.headersPath = Path.Combine(this.workspacePath, "headers.json");
 
             Directory.CreateDirectory(this.workspacePath);
-            Directory.CreateDirectory(Path.Combine(this.workspacePath, "cache"));
+
+            var cachePath = Path.Combine(this.workspacePath, "cache");
+
+            Directory.CreateDirectory(cachePath);
+
+            List<string> cachePaths = [];
+
+            cachePaths.Add(Path.Combine(this.workspacePath, "cache", "albums.json"));
+            cachePaths.Add(Path.Combine(this.workspacePath, "cache", "playlists.json"));
+            cachePaths.Add(Path.Combine(this.workspacePath, "cache", "artists.json"));
+            cachePaths.Add(Path.Combine(this.workspacePath, "cache", "library.json"));
+            cachePaths.Add(Path.Combine(this.workspacePath, "cache", "cachedSongs.json"));
+            cachePaths.Add(Path.Combine(this.workspacePath, "cache", "downloaded.json"));
+
+
+            cachePaths.ForEach(P =>
+            {
+                if (!File.Exists(P))
+                {
+                    File.WriteAllText(P, "{}");
+                }
+            });
+
+
 
             if (File.Exists(headersPath))
             {
@@ -75,11 +110,16 @@ namespace YoutubeMusic
                 ytWriteLine("no headers found, limited functionality");
             }
 
-            this.AccountEndpoint = new Account(this.youtubHeaders!);
-            this.SearchEndpoint = new Search(this.youtubHeaders!);
-            this.BrowseEndpoint = new Browse(this.youtubHeaders!);
-            this.LibraryEndpoint = new Library(this.youtubHeaders!);
-            this.InteractionsEndpoint = new Interactions(this.youtubHeaders!);
+            this.AccountEndpoint = new Account(this.youtubHeaders!, this);
+            this.SearchEndpoint = new Search(this.youtubHeaders!, this);
+            this.BrowseEndpoint = new Browse(this.youtubHeaders!, this);
+            this.LibraryEndpoint = new Library(this.youtubHeaders!, this);
+            this.InteractionsEndpoint = new Interactions(this.youtubHeaders!, this);
+
+
+
+
+
             ytWriteLine("api ready to use");
         }
 
@@ -92,178 +132,106 @@ namespace YoutubeMusic
 
 
 
-        public class Account
+
+        public JsonObject? GetFromLocalDB(DB_filter type, string id)
         {
-            private readonly JsonObject? youtubHeaders;
-            internal Account(JsonObject headers)
+            var DB_content = GetSavedData(type);
+
+            if (DB_content != null && DB_content.ContainsKey(id))
             {
-                youtubHeaders = headers;
+                return (JsonObject?)DB_content?[id] ?? [];
             }
 
-            public async Task<JsonObject> GetLoggedUser()
-            {
-                string path = Path.Join("./ytdata/cookies.json");
-
-                if (youtubHeaders != null)
-                {
-                    JsonObject? C = youtubHeaders;
-                    JsonObject result = await Requester.PostRequest(endpointUrl: "account/account_menu", cookies: C, payload: new JsonObject());
-
-                    JsonNode loggedUser = new JsonObject();
-
-                    var infos = result["actions"]?[0]?["openPopupAction"]?["popup"]?["multiPageMenuRenderer"]?["header"]?["activeAccountHeaderRenderer"];
-
-
-                    loggedUser["name"] = infos?["accountName"]?["runs"]?[0]?["text"]?.GetValue<string>() ?? string.Empty;
-                    loggedUser["username"] = infos?["channelHandle"]?["runs"]?[0]?["text"]?.GetValue<string>() ?? string.Empty;
-                    loggedUser["imgUrl"] = infos?["accountPhoto"]?["thumbnails"]?[0]?["url"]?.GetValue<string>() ?? string.Empty;
-                    loggedUser["logged"] = true;
-
-                    return (JsonObject)loggedUser;
-
-                }
-                else
-                {
-                    var res = new JsonObject();
-
-                    res["logged"] = false;
-
-                    return res;
-                }
-
-
-            }
-        }
-
-        public class Search
-        {
-            private JsonObject? youtubHeaders;
-            internal Search(JsonObject headers)
-            {
-                youtubHeaders = headers;
-            }
-
-            public async Task<JsonArray> GetSearchSugg(string input)
-            {
-                string parsedString = input.Replace(" ", "-");
-                return await YTsearch.GetSearchSuggestions(parsedString, youtubHeaders);
-            }
-
-            public async Task<JsonObject> GenericSearch(string query)
-            {
-                string parsedString = query.Replace(" ", "-");
-                return await YTsearch.Search(parsedString, youtubHeaders);
-            }
-
-            public async Task<JsonObject> SpecificSearch(string query, ContentType contentType)
-            {
-
-                if ( contentType == ContentType.Text)
-                {
-                    return [];
-                }
-                string parsedString = query.Replace(" ", "-");
-                return await YTsearch.SpecificSearch(parsedString, youtubHeaders, contentType: contentType);
-
-            }
-
+            return [];
 
         }
 
-        public class Browse
+
+
+        internal string? GetDBPath(DB_filter type)
         {
-            private JsonObject? youtubHeaders;
-            internal Browse(JsonObject headers)
+            string? p = null;
+
+            switch (type)
             {
-                youtubHeaders = headers;
+                case DB_filter.ALBUM:
+                    p = Path.Combine(workspacePath, "cache", "albums.json");
+                    break;
+                case DB_filter.PLAYLIST:
+                    p = Path.Combine(workspacePath, "cache", "playlists.json");
+                    break;
+                case DB_filter.ARTIST:
+                    p = Path.Combine(workspacePath, "cache", "artists.json");
+                    break;
+                case DB_filter.LIBRARY:
+                    p = Path.Combine(workspacePath, "cache", "library.json");
+                    break;
+                case DB_filter.CACHEDSONG:
+                    p = Path.Combine(workspacePath, "cache", "cachedSongs.json");
+                    break;
+                case DB_filter.DOWNLOADED:
+                    p = Path.Combine(workspacePath, "cache", "downloaded.json");
+                    break;
             }
 
-            public async Task<JsonObject> FetchAlbumData(string browseId)
+            return p;
+        }
+        internal void WriteJsonData(DB_filter type, JsonObject data)
+        {
+
+            string? path = GetDBPath(type);
+
+            if (path != null)
             {
-
-                return await Album.FetchAlbumData( browseId, youtubHeaders);
-
-            }
-
-            public async Task<JsonObject> FetchPlaylistData(string browseId)
-            {
-                return await Playlist.FetchPlaylistData( browseId, youtubHeaders);
-            }
-
-            public async Task<JsonObject> FetchArtistPage(string browseId)
-            {
-                return await ArtistPage.FetchArtistPage(browseId, youtubHeaders);
-            }
-
-            public async Task<JsonObject> FetchHomeSection(string? continuationToken = null)
-            {
-
-                return await HomeData.GetHomeSection(youtubHeaders, continuation: continuationToken);
-
-            }
-
-            public async Task<JsonObject> FetchHomeSections()
-            {
-                return await HomeData.GetHomeSections(youtubHeaders);
+                File.WriteAllText(path, JsonSerializer.Serialize(data));
             }
 
         }
 
-        public class Library
+        internal JsonObject? GetSavedData(DB_filter type)
         {
-            private JsonObject? youtubHeaders;
-            internal Library(JsonObject headers)
+            string? p = GetDBPath(type);
+
+
+            if (p != null)
             {
-                youtubHeaders = headers;
+                return (JsonObject?)JsonNode.Parse(File.ReadAllText(p) ?? "{}");
             }
 
-            public async Task<JsonObject> GetLikedTracks()
-            {
-                return await Playlist.FetchUserLikePlaylist(youtubHeaders);
-            }
-
-            public async Task<JsonObject> GetSavedEpisodes()
-            {
-                return await Playlist.FetchUserEpisodePlaylist(youtubHeaders);
-            }
-
-            public async Task<JsonObject> GetLibraryLandingPage()
-            {
-                return await LibraryData.GetUserLibrary(youtubHeaders);
-            }
-
-            public async Task<JsonObject> GetLibraryContent(ContentFilter filter)
-            {
-                return await LibraryData.GetUserContentByFilter( youtubHeaders, filter);
-            }
+            return [];
 
         }
 
-        public class Interactions
+        internal JsonObject DB_Get(string id, DB_filter filter)
         {
-            private JsonObject? youtubHeaders;
-            internal Interactions(JsonObject headers)
+
+            JsonObject? DB_data = GetSavedData(filter);
+
+
+            if (DB_data != null && DB_data.ContainsKey(id))
             {
-                youtubHeaders = headers;
+
+                return (JsonObject?)DB_data?[id] ?? new JsonObject();
+
             }
 
-            public async void SetSongLikeStatus(string id, LikeStatus likeStatus)
-            {
-                await SongsInteractions.SetSongLikeStatus(id, likeStatus, youtubHeaders);
-            }
-
-            public async void SetArtistSubscription(string browseId, bool subscribe)
-            {
-                await ArtistInteraction.SetArtistSubscriptionStatus(browseId, subscribe, youtubHeaders);
-            }
-
-            public async void SetPlaylistSave(string browseId, bool save)
-            {
-                await AlbumInteractions.SetPlaylistSaveStatus(browseId, save, youtubHeaders);
-            }
+            return [];
 
         }
 
+        internal void DB_Insert(string id, JsonObject data, DB_filter filter)
+        {
+
+            JsonObject? DB_data = GetSavedData(filter);
+
+            if (DB_data != null)
+            {
+                System.Console.WriteLine("writing " + id);
+                DB_data[id] = data;
+                WriteJsonData(filter, DB_data);
+            }
+
+        }
     }
 
 

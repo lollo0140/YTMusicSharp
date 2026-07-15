@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using DebugUtility;
 
 namespace YoutubeMusic
 {
@@ -38,11 +40,14 @@ namespace YoutubeMusic
             JsonObject result = await Requester.PostRequest(endpointUrl: "browse", cookies: C, payload: payload);
 
 
+
+
+
             JsonObject parsedPlaylist = new JsonObject();
 
             if (result != null)
             {
-                parsedPlaylist["data"] = ParsePlaylistMetaData(result);
+                parsedPlaylist["data"] = ParsePlaylistMetaData(result, BrowseId);
             }
 
             //PARSING elements ---------------------------------
@@ -128,23 +133,196 @@ namespace YoutubeMusic
 
         }
 
-        private static JsonObject ParsePlaylistMetaData(JsonObject? data)
+        private static JsonObject ParsePlaylistMetaData(JsonObject? data, string BrowseId)
         {
 
-            JsonObject playlistData = new JsonObject();
+            JsonObject ParsedData = new JsonObject();
+
+            string PLId = BrowseId.StartsWith("VL") ? BrowseId.Substring(2) : BrowseId;
+
 
             if (data != null)
             {
 
-                JsonObject? microformatRenderer = (JsonObject?)data?["microformat"]?["microformatDataRenderer"] ?? null;
 
-                playlistData["title"] = microformatRenderer?["title"]?.GetValue<string>();
-                playlistData["description"] = microformatRenderer?["description"]?.GetValue<string>();
-                playlistData["thumbnail"] = microformatRenderer?["thumbnail"]?["thumbnails"]?[0]?["url"]?.GetValue<string>();
+                JsonObject? headerData = (JsonObject?)data["contents"]?["twoColumnBrowseResultsRenderer"]?["tabs"]?[0]?["tabRenderer"]?["content"]?["sectionListRenderer"]?["contents"]?[0];
+
+
+                JsonObject? PlaylistData = (JsonObject?)headerData?["musicEditablePlaylistDetailHeaderRenderer"]?["header"]?["musicResponsiveHeaderRenderer"] ?? (JsonObject?)headerData?["musicResponsiveHeaderRenderer"];
+
+
+                JsonObject? editFormNode = (JsonObject?)headerData?["musicEditablePlaylistDetailHeaderRenderer"]?["editHeader"]?["musicPlaylistEditHeaderRenderer"];
+
+
+                //privacy status --------------------
+
+
+                ParsedData["privacyStatus"] = editFormNode?["privacy"]?.GetValue<string>() ?? "PUBLIC";
+
+
+                //privacy status --------------------
+
+
+
+                //Thumbnails -------------
+                JsonArray Thumbnails = [];
+
+                foreach (JsonObject? T in (PlaylistData?["thumbnail"]?["musicThumbnailRenderer"]?["thumbnail"]?["thumbnails"]?.AsArray() ?? []).Cast<JsonObject?>())
+                {
+                    if (T?["url"] != null)
+                    {
+                        Thumbnails.Add(T["url"]?.GetValue<string>());
+                    }
+                }
+
+                ParsedData["thumbnails"] = Thumbnails;
+                //Thumbnails -------------
+
+
+
+                //buttons ----------------
+
+                JsonArray? buttons = (JsonArray?)PlaylistData?["buttons"];
+
+                ParsedData["canEdit"] = false;
+                ParsedData["canDelete"] = false;
+
+                foreach (JsonObject? B in (buttons ?? []).Cast<JsonObject?>())
+                {
+
+                    if (B != null)
+                    {
+                        if (B.ContainsKey("buttonRenderer"))
+                        {
+                            JsonObject? BaseButtonNode = (JsonObject?)B["buttonRenderer"];
+
+                            ParsedData["canEdit"] = (BaseButtonNode?["targetId"]?.GetValue<string>() ?? "") == "music-edit-playlist-button";
+                            ParsedData["saved"] = ParsedData["canEdit"]?.GetValue<bool>() ?? false;
+
+                        }
+                        else if (B.ContainsKey("menuRenderer"))
+                        {
+
+                            //Menu items -----------------
+
+                            JsonArray? menuItems = (JsonArray?)B?["menuRenderer"]?["items"];
+
+
+                            foreach (JsonObject menuItem in (menuItems ?? []).Cast<JsonObject>())
+                            {
+                                string? iconType = menuItem?["menuNavigationItemRenderer"]?["icon"]?["iconType"]?.GetValue<string>() ?? null;
+
+                                // System.Console.WriteLine(iconType);
+
+                                if (iconType != null && iconType == "DELETE")
+                                {
+
+                                    ParsedData["canDelete"] = true;
+                                    break;
+
+                                }
+                                else
+                                {
+                                    ParsedData["canDelete"] = false;
+                                }
+
+                            }
+
+                            //Menu items -----------------
+
+                        }
+                        else if (B.ContainsKey("toggleButtonRenderer"))
+                        {
+                            ParsedData["saved"] = B?["toggleButtonRenderer"]?["isToggled"]?.GetValue<bool>() ?? false;
+                        }
+
+                    }
+
+
+
+
+                }
+
+
+                //buttons ----------------
+
+
+                //title --------------------------
+                ParsedData["title"] = PlaylistData?["title"]?["runs"]?[0]?["text"]?.GetValue<string>();
+                //title --------------------------
+
+
+                //subtitle --------------------------
+
+                JsonArray? subtitleComponents = (JsonArray?)PlaylistData?["subtitle"]?["runs"];
+                string subtitle = "";
+
+                foreach (JsonObject? c in (subtitleComponents ?? []).Cast<JsonObject?>())
+                {
+                    subtitle += c?["text"]?.GetValue<string>() ?? "";
+                }
+
+                ParsedData["subtitle"] = subtitle;
+
+
+                JsonArray? secondSubtitleComponents = (JsonArray?)PlaylistData?["secondSubtitle"]?["runs"];
+                string secondSubtitle = "";
+
+                foreach (JsonObject? c in (secondSubtitleComponents ?? []).Cast<JsonObject?>())
+                {
+                    secondSubtitle += c?["text"]?.GetValue<string>() ?? "";
+                }
+
+                ParsedData["secondSubtitle"] = secondSubtitle;
+
+                //subtitle --------------------------
+
+
+
+
+                //description --------------------------
+
+                ParsedData["description"] = PlaylistData?["description"]?["musicDescriptionShelfRenderer"]?["description"]?["runs"]?[0]?["text"]?.GetValue<string>();
+
+                //description --------------------------
+
+
+                //facepile -----------------------------
+
+                JsonObject? facepileNode = (JsonObject?)PlaylistData?["facepile"]?["avatarStackViewModel"];
+                JsonArray? faepiles = (JsonArray?)facepileNode?["avatars"];
+
+                JsonObject parsedFacePiles = new JsonObject();
+
+
+                JsonArray photosUrl = [];
+
+                foreach (JsonObject profiles in (faepiles ?? []).Cast<JsonObject>())
+                {
+                    photosUrl.Add(profiles?["avatarViewModel"]?["image"]?["sources"]?[0]?["url"]?.GetValue<string>());
+                }
+
+                parsedFacePiles["profileIcons"] = photosUrl;
+                parsedFacePiles["text"] = facepileNode?["text"]?["content"]?.GetValue<string>() ?? null;
+
+                ParsedData["facepile"] = parsedFacePiles;
+
+                //facepile -----------------------------
+
+                //share link ---------------------------
+
+                ParsedData["shareLink"] = "https://music.youtube.com/playlist?list=" + PLId;
+
+                ParsedData["playlistId"] = PLId;
+
+                //share link ---------------------------
+
+
+
 
             }
 
-            return playlistData;
+            return ParsedData;
 
         }
 

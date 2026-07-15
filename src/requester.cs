@@ -9,11 +9,41 @@ namespace YoutubeMusic
     internal class Requester
     {
 
+        public static string? HL = null;
+        public static string? GL = null;
+
+        internal static void SetLanguage(string? hl, string? gl)
+        {
+
+            if (hl != null)
+            {
+                HL = hl;
+            }
+
+            if (gl != null)
+            {
+                GL = gl;
+            }
+
+        }
 
         internal static JsonNode GetRequestContext()
         {
             JsonNode context = new JsonObject();
             JsonNode client = new JsonObject();
+
+
+
+            if (HL != null)
+            {
+                client["hl"] = HL;
+            }
+
+            if (GL != null)
+            {
+                client["gl"] = GL;
+            }
+
 
 
             client["clientName"] = "WEB_REMIX";

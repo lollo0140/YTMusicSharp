@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DebugUtility;
 
 namespace YoutubeMusic
 {
@@ -39,7 +40,7 @@ namespace YoutubeMusic
 
             if (albumData != null)
             {
-                parsedAlbum["data"] = ParseAlbumInfos(albumData);
+                parsedAlbum["data"] = ParseAlbumInfos(albumData, BrowseId);
             }
             else
             {
@@ -121,79 +122,135 @@ namespace YoutubeMusic
 
         }
 
-        private static JsonObject ParseAlbumInfos(JsonObject data)
+        private static JsonObject ParseAlbumInfos(JsonObject data, string brosweId)
         {
 
             JsonObject parsedAlbumData = new JsonObject();
 
 
-            string? title = data["title"]?["runs"]?[0]?["text"]?.GetValue<string>() ?? null;
+            parsedAlbumData["brosweId"] = brosweId;
 
 
-            JsonArray? albumThumbnails = (JsonArray?)data?["thumbnail"]?["musicThumbnailRenderer"]?["thumbnail"]?["thumbnails"] ?? null;
+            //thumbnails -------------------
+
+            JsonArray? thumbnails = (JsonArray?)data?["thumbnail"]?["musicThumbnailRenderer"]?["thumbnail"]?["thumbnails"];
+
+            JsonArray parsedThumbnails = [];
 
 
-            JsonObject? strapLineTextOne = (JsonObject?)data?["straplineTextOne"]?["runs"]?[0];
-            JsonArray? strapLineThumbnails = (JsonArray?)data?["straplineThumbnail"]?["musicThumbnailRenderer"]?["thumbnail"]?["thumbnails"];
-
-
-
-
-
-
-
-            if (title != null)
+            if (thumbnails != null && thumbnails.Count > 0)
             {
-                parsedAlbumData["title"] = title;
-            }
-            else
-            {
-                parsedAlbumData["title"] = "no title";
-            }
-
-            JsonObject artistData = new JsonObject();
-
-            if (strapLineTextOne != null)
-            {
-
-                artistData["artistName"] = strapLineTextOne?["text"]?.GetValue<string>() ?? "no name";
-                artistData["artistId"] = strapLineTextOne?["navigationEndpoint"]?["browseEndpoint"]?["browseId"]?.GetValue<string>() ?? "no browseId";
-
-                parsedAlbumData["artist"] = artistData;
-            }
-
-
-
-            JsonArray thumbnails = [];
-
-            if (strapLineThumbnails != null)
-            {
-
-                foreach (JsonObject? thumbnail in strapLineThumbnails)
+                foreach (JsonObject? item in (thumbnails ?? []).Cast<JsonObject?>())
                 {
+                    if (item != null)
+                    {
+                        parsedThumbnails.Add(item?["url"]?.GetValue<string>());
+                    }
+                }
+            }
 
-                    thumbnails.Add(thumbnail?["url"]?.GetValue<string>() ?? "no url");
+            parsedAlbumData["thumbnails"] = parsedThumbnails;
+
+            //thumbnails -------------------
+
+
+            //buttons -------------------
+
+            parsedAlbumData["saved"] = data?["buttons"]?[0]?["toggleButtonRenderer"]?["isToggled"]?.GetValue<bool>() ?? false;
+            parsedAlbumData["saveParam"] = data?["buttons"]?[0]?["toggleButtonRenderer"]?["defaultServiceEndpoint"]?["likeEndpoint"]?["target"]?["playlistId"]?.GetValue<string>();
+            parsedAlbumData["shareLink"] = $"https://music.youtube.com/playlist?list={parsedAlbumData["saveParam"]!.GetValue<string>() ?? ""}";
+
+            //buttons -------------------
+
+
+            //title ----------------------
+
+            parsedAlbumData["title"] = data?["title"]?["runs"]?[0]?["text"]?.GetValue<string>();
+
+            //title ----------------------
+
+
+            //subtitle -------------------
+
+            JsonArray? runs = (JsonArray?)data?["subtitle"]?["runs"];
+
+            string subtitle = "";
+
+            if (runs != null && runs.Count > 0)
+            {
+                foreach (JsonObject? run in (runs ?? []).Cast<JsonObject?>())
+                {
+                    subtitle += run?["text"] ?? "";
+                }
+            }
+
+            parsedAlbumData["subtitle"] = subtitle;
+
+            //subtitle -------------------
+
+
+
+            //straplineTextOne -----------
+
+            JsonObject artist = new JsonObject();
+            JsonObject? straplineTextOne = (JsonObject?)data?["straplineTextOne"]?["runs"]?[0];
+
+
+            if (straplineTextOne != null)
+            {
+                artist["name"] = straplineTextOne?["text"]?.GetValue<string>() ?? "";
+                artist["browseId"] = straplineTextOne?["navigationEndpoint"]?["browseEndpoint"]?["browseId"]?.GetValue<string>() ?? "";
+            }
+
+            parsedAlbumData["artist"] = artist;
+
+            //straplineTextOne -----------
+
+
+
+            //subtitleBadge --------------
+
+            JsonArray? badges = (JsonArray?)data?["subtitleBadge"];
+
+            parsedAlbumData["explicit"] = false;
+
+            if (badges != null && badges.Count > 1)
+            {
+                foreach (var item in badges)
+                {
+                    string icon = item?["musicInlineBadgeRenderer"]?["icon"]?["iconType"]?.GetValue<string>() ?? "";
+
+                    if (icon == "MUSIC_EXPLICIT_BADGE")
+                    {
+                        parsedAlbumData["explicit"] = true;
+                    }
 
                 }
-
-                artistData["thumbnails"] = thumbnails;
-
             }
 
-            JsonArray parsedAlbumThumbnails = [];
 
-            if (albumThumbnails != null)
+            //subtitleBadge --------------
+
+
+
+            //second --------------------
+
+            JsonArray? secondRuns = (JsonArray?)data?["secondSubtitle"]?["runs"];
+
+            string secondSubtitle = "";
+
+            if (secondRuns != null && secondRuns.Count > 0)
             {
-                foreach (JsonObject? thumbnail in albumThumbnails)
+                foreach (JsonObject? run in (secondRuns ?? []).Cast<JsonObject?>())
                 {
-
-                    parsedAlbumThumbnails.Add(thumbnail?["url"]?.GetValue<string>() ?? "no url");
-
+                    secondSubtitle += run?["text"] ?? "";
                 }
-
-                parsedAlbumData["thumbnails"] = parsedAlbumThumbnails.DeepClone();
             }
 
+            parsedAlbumData["secondSubtitle"] = secondSubtitle;
+
+
+            //second --------------------
 
             return parsedAlbumData;
 

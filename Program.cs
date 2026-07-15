@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
+using DebugUtility;
 using YoutubeMusic;
 
 
@@ -16,7 +17,5 @@ YTMusicSharp ytClient = new YTMusicSharp(
 
 
 
-JsonObject lib = await ytClient.BrowseEndpoint.FetchPlaylistData("VLPLy5pUd6-NNXvxa3jBIHXyyS5LQGxudfiM");
-
-string serializeContent = JsonSerializer.Serialize(lib);
-File.WriteAllText("./test.json", serializeContent);
+await ytClient.InteractionsEndpoint.GetAddToPlaylistMenu();
+// YTSharpDebugClass.WriteJsonToTestFile(lib, 2);
