@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using DebugUtility;
 
@@ -165,16 +166,22 @@ namespace YoutubeMusic
 
             foreach (string id in videosId)
             {
-                JsonObject songAction = [];
-                songAction["action"] = "ACTION_ADD_VIDEO";
-                songAction["addedVideoId"] = id;
+                if (id != null)
+                {
+                    JsonObject songAction = [];
+                    songAction["action"] = "ACTION_ADD_VIDEO";
+                    songAction["addedVideoId"] = id;
 
-                actions.Add(songAction.DeepClone());
+                    actions.Add(songAction.DeepClone());
+                }
             }
 
 
             payload["actions"] = actions;
             payload["playlistId"] = playlistId;
+
+            System.Console.WriteLine("requesting: --------------------------------" + JsonSerializer.Serialize(payload));
+
             await Requester.PostRequest(endpointUrl: "browse/edit_playlist", cookies: C, payload: payload);
         }
 

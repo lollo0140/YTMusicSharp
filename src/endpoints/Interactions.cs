@@ -27,15 +27,22 @@ namespace YoutubeMusic
             await AlbumInteractions.SetPlaylistSaveStatus(browseId, save, youtubHeaders);
         }
 
-        public async Task GetAddToPlaylistMenu()
+        public async Task<JsonObject> GetAddToPlaylistMenu()
         {
-            await SongsInteractions.GetAddToPlaylistOptionList(youtubHeaders);
+            return await SongsInteractions.GetAddToPlaylistOptionList(youtubHeaders);
         }
 
         public async void AddVideoToPlaylist(string[] ids, string playlistId)
         {
 
             await SongsInteractions.AddToPlaylist(playlistId, ids, youtubHeaders);
+
+        }
+
+        public async void RemoveVideoFromPlaylist(string ids, string setVideoId, string playlistId)
+        {
+
+            await SongsInteractions.RemoveFromPlaylist(playlistId, ids, setVideoId, youtubHeaders);
 
         }
     }
