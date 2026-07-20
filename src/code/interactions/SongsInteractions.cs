@@ -171,6 +171,7 @@ namespace YoutubeMusic
                     JsonObject songAction = [];
                     songAction["action"] = "ACTION_ADD_VIDEO";
                     songAction["addedVideoId"] = id;
+                    songAction["dedupeOption"] = "DEDUPE_OPTION_SKIP";
 
                     actions.Add(songAction.DeepClone());
                 }

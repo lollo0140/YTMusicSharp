@@ -1,5 +1,8 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using YoutubeExplode;
+using YoutubeExplode.Videos.Streams;
 
 namespace YoutubeMusic
 {
@@ -46,12 +49,13 @@ namespace YoutubeMusic
 
     public class YTMusicSharp
     {
-
+        private YoutubeClient? videoGetter = null;
 
         readonly string workspacePath;
 
         private readonly string headersPath;
         private readonly JsonObject? youtubHeaders;
+
 
 
         //endpoints: -----------------
@@ -72,7 +76,9 @@ namespace YoutubeMusic
 
             var cachePath = Path.Combine(this.workspacePath, "cache");
 
+
             Directory.CreateDirectory(cachePath);
+            Directory.CreateDirectory(Path.Combine(cachePath, "cachedvideos"));
 
             List<string> cachePaths = [];
 
@@ -232,6 +238,64 @@ namespace YoutubeMusic
             }
 
         }
+
+
+
+
+        public bool IsVideoCached(string id)
+        {
+            string path = Path.Combine(this.workspacePath, "cache", "cachedvideos", $"{id}.webm");
+
+            if (File.Exists(path))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<string> GetYTAudioById(string id)
+        {
+            if (IsVideoCached(id))
+            {
+                return Path.Combine(this.workspacePath, "cache", "cachedvideos", $"{id}.webm");
+            }
+
+            if (videoGetter == null)
+            {
+                videoGetter = new YoutubeClient();
+            }
+
+            var videoUrl = $"https://youtube.com/watch?v={id}";
+            var streamManifest = await videoGetter.Videos.Streams.GetManifestAsync(videoUrl);
+
+            var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+
+            string extension = streamInfo.Container.Name;
+
+            var stream = await videoGetter.Videos.Streams.GetAsync(streamInfo);
+
+
+            if (this.workspacePath != null)
+            {
+                string destinationPath = Path.Combine(this.workspacePath, "cache", "cachedvideos", $"{id}.{extension}") ?? "";
+
+                using (FileStream fs = File.Create(destinationPath))
+                {
+                    await stream.CopyToAsync(fs);
+                }
+
+                Path.Combine(this.workspacePath, "cache", "cachedvideos", $"{id}.webm");
+
+                return destinationPath;
+            }
+            else
+            {
+                System.Console.WriteLine("Please specify a workspace");
+            }
+
+            return "";
+        }
+
     }
 
 

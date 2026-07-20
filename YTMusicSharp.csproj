@@ -8,6 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="YoutubeExplode" Version="6.6.0" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Compile Remove="Program.cs" />
     </ItemGroup>
 

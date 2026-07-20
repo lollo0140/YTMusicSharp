@@ -2,6 +2,18 @@ using System.Text.Json.Nodes;
 
 namespace YoutubeMusic
 {
+
+    public enum PrivacyStatus
+    {
+
+        UNLISTED,
+        PUBLIC,
+        PRIVATE
+
+
+    }
+
+
     public class Interactions
     {
         private readonly YTMusicSharp yt;
@@ -11,6 +23,7 @@ namespace YoutubeMusic
             yt = yT;
             youtubHeaders = headers;
         }
+
 
         public async void SetSongLikeStatus(string id, LikeStatus likeStatus)
         {
@@ -43,6 +56,35 @@ namespace YoutubeMusic
         {
 
             await SongsInteractions.RemoveFromPlaylist(playlistId, ids, setVideoId, youtubHeaders);
+
+        }
+
+
+        public async Task SetPlaylistCollaborate(string playlistId, bool collaborate)
+        {
+            await PlaylistInteraction.SetPlaylistCollaborators(playlistId, collaborate, youtubHeaders);
+        }
+
+        public async Task EditPLaylist(string playlistId,
+        string? pTitle = null,
+        string? pDescriprtion = null,
+        PrivacyStatus? privacyStatus = null)
+        {
+            await PlaylistInteraction.EditPlaylist(playlistId, youtubHeaders, title: pTitle, description: pDescriprtion, privacyStatus: privacyStatus);
+        }
+
+        public async Task DeletePLaylist(string playlistId)
+        {
+            await PlaylistInteraction.DeletePlaylist(playlistId, youtubHeaders);
+        }
+
+        public async Task CreatePlaylist(
+        string? pTitle = null,
+        string? pDescriprtion = null,
+        PrivacyStatus? privacyStatus = null)
+        {
+
+            await PlaylistInteraction.CreatePlaylist(youtubHeaders, pTitle, pDescriprtion, privacyStatus);
 
         }
     }

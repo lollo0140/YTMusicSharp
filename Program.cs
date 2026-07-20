@@ -17,5 +17,5 @@ YTMusicSharp ytClient = new YTMusicSharp(
 
 
 
-JsonObject lib = await ytClient.InteractionsEndpoint.GetAddToPlaylistMenu();
-YTSharpDebugClass.WriteJsonToTestFile(lib, 2);
+
+System.Console.WriteLine(await ytClient.GetYTAudioById("ijpFh42YQ3w"));
