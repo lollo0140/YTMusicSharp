@@ -270,7 +270,7 @@ namespace YoutubeMusic
 
             var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
 
-            string extension = streamInfo.Container.Name;
+            string extension = "webm";
 
             var stream = await videoGetter.Videos.Streams.GetAsync(streamInfo);
 
