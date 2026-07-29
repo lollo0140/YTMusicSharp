@@ -25,17 +25,17 @@ namespace YoutubeMusic
         }
 
 
-        public async void SetSongLikeStatus(string id, LikeStatus likeStatus)
+        public async Task SetSongLikeStatus(string id, LikeStatus likeStatus)
         {
             await SongsInteractions.SetSongLikeStatus(id, likeStatus, youtubHeaders);
         }
 
-        public async void SetArtistSubscription(string browseId, bool subscribe)
+        public async Task SetArtistSubscription(string browseId, bool subscribe)
         {
             await ArtistInteraction.SetArtistSubscriptionStatus(browseId, subscribe, youtubHeaders);
         }
 
-        public async void SetPlaylistSave(string browseId, bool save)
+        public async Task SetPlaylistSave(string browseId, bool save)
         {
             await AlbumInteractions.SetPlaylistSaveStatus(browseId, save, youtubHeaders);
         }
@@ -45,14 +45,14 @@ namespace YoutubeMusic
             return await SongsInteractions.GetAddToPlaylistOptionList(youtubHeaders);
         }
 
-        public async void AddVideoToPlaylist(string[] ids, string playlistId)
+        public async Task AddVideoToPlaylist(string[] ids, string playlistId)
         {
 
             await SongsInteractions.AddToPlaylist(playlistId, ids, youtubHeaders);
 
         }
 
-        public async void RemoveVideoFromPlaylist(string ids, string setVideoId, string playlistId)
+        public async Task RemoveVideoFromPlaylist(string ids, string setVideoId, string playlistId)
         {
 
             await SongsInteractions.RemoveFromPlaylist(playlistId, ids, setVideoId, youtubHeaders);

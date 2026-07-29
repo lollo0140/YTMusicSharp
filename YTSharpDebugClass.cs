@@ -10,6 +10,7 @@ namespace DebugUtility
         internal static void WriteJsonToTestFile(JsonObject data, int fileNumber = 1)
         {
 
+#if DEBUG
             if (data != null)
             {
                 string path = $"./test{fileNumber}.json";
@@ -21,6 +22,10 @@ namespace DebugUtility
                 File.WriteAllText(path, content);
 
             }
+
+#endif
+
+
 
 
 

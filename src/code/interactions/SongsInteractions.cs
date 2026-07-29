@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using AngleSharp.Text;
 using DebugUtility;
 
 namespace YoutubeMusic
@@ -199,17 +200,21 @@ namespace YoutubeMusic
                 C = new JsonObject();
             }
 
-            var payload = new JsonObject();
+            var payload = new JsonObject
+            {
+                ["actions"] = new JsonArray
+                {
+                    new JsonObject
+                    {
+                        ["action"] = "ACTION_REMOVE_VIDEO",
+                        ["removedVideoId"] = videoId,
+                        ["setVideoId"] = setVideoId
+                    }
+                },
+                ["playlistId"] = playlistId.StartsWith("VL") ? playlistId.ReplaceFirst("VL", "") : playlistId
+            };
 
 
-            JsonObject songAction = [];
-            songAction["action"] = "ACTION_REMOVE_VIDEO";
-            songAction["removedVideoId"] = videoId;
-            songAction["setVideoId"] = setVideoId;
-
-
-            payload["actions"] = new JsonArray([songAction]);
-            payload["playlistId"] = playlistId;
             await Requester.PostRequest(endpointUrl: "browse/edit_playlist", cookies: C, payload: payload);
         }
 
