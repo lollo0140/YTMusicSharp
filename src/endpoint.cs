@@ -241,6 +241,26 @@ namespace YoutubeMusic
 
 
 
+        public void ReleaseCached()
+        {
+            string path = Path.Combine(this.workspacePath, "cache", "cachedvideos");
+            string[] files = Directory.GetFiles(path);
+
+            foreach (string filePath in files)
+            {
+                File.Delete(filePath);
+            }
+        }
+
+        public void ReleaseCached(string id)
+        {
+            string path = Path.Combine(this.workspacePath, "cache", "cachedvideos", $"{id}.webm");
+
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
 
         public bool IsVideoCached(string id)
         {

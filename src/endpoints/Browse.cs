@@ -24,10 +24,38 @@ namespace YoutubeMusic
 
             JsonObject data = await Album.FetchAlbumData(browseId, youtubHeaders);
 
-            yt.DB_Insert(browseId, data, DB_filter.ALBUM);
+            string name = data?["data"]?["title"]?.GetValue<string>() ?? "";
+            JsonArray thumbnails = [data?["data"]?["thumbnails"]?[0]?.GetValue<string>(), data?["data"]?["thumbnails"]?[1]?.GetValue<string>()];
 
-            return data;
+            JsonArray artists = [data?["data"]?["artist"]];
 
+
+            foreach (JsonNode? item in (JsonArray?)data?["items"] ?? [])
+            {
+                if (item != null)
+                {
+                    item["album"] = new JsonObject
+                    {
+                        ["albumId"] = browseId,
+                        ["titleName"] = name
+                    };
+                    item["thumbnails"] = thumbnails.DeepClone();
+
+                    if (item?["artists"] == null)
+                    {
+                        item?["artists"] = artists.DeepClone();
+                    }
+                }
+
+            }
+
+            if (data != null)
+            {
+                yt.DB_Insert(browseId, data, DB_filter.ALBUM);
+
+                return data;
+            }
+            return [];
         }
 
         public async Task<JsonObject> FetchAlbumDataSongsOnly(string browseId)
@@ -84,6 +112,28 @@ namespace YoutubeMusic
 
                 data!["items"] = filteredTracks;
             }
+
+
+            string name = data?["data"]?["title"]?.GetValue<string>() ?? "";
+            JsonArray thumbnails = [data?["data"]?["thumbnails"]?[0]?.GetValue<string>(), data?["data"]?["thumbnails"]?[1]?.GetValue<string>()];
+
+
+            foreach (JsonNode? item in ((JsonArray?)data?["items"] ?? []))
+            {
+
+                if (item != null)
+                {
+                    item["album"] = new JsonObject
+                    {
+                        ["albumId"] = browseId,
+                        ["titleName"] = name
+                    };
+                    item["thumbnails"] = thumbnails.DeepClone();
+                }
+
+            }
+
+
 
             if (data != null)
             {
