@@ -51,9 +51,11 @@ namespace YoutubeMusic
 
             if (data != null)
             {
-                yt.DB_Insert(browseId, data, DB_filter.ALBUM);
-
-                return data;
+                if (data.ContainsKey("data") && data.ContainsKey("items"))
+                {
+                    yt.DB_Insert(browseId, data, DB_filter.ALBUM);
+                    return data;
+                }
             }
             return [];
         }
@@ -137,9 +139,11 @@ namespace YoutubeMusic
 
             if (data != null)
             {
-                yt.DB_Insert(browseId, data, DB_filter.ALBUM);
-
-                return data;
+                if (data.ContainsKey("data") && data.ContainsKey("items"))
+                {
+                    yt.DB_Insert(browseId, data, DB_filter.ALBUM);
+                    return data;
+                }
             }
 
             return [];
@@ -151,18 +155,35 @@ namespace YoutubeMusic
         {
             JsonObject data = await Playlist.FetchPlaylistData(browseId, youtubHeaders);
 
-            yt.DB_Insert(browseId, data, DB_filter.PLAYLIST);
 
-            return data;
+            if (data != null)
+            {
+                if (data.ContainsKey("data") && data.ContainsKey("items"))
+                {
+                    yt.DB_Insert(browseId, data, DB_filter.PLAYLIST);
+                    return data;
+                }
+            }
+
+            return [];
         }
 
         public async Task<JsonObject> FetchArtistPage(string browseId)
         {
             JsonObject data = await ArtistPage.FetchArtistPage(browseId, youtubHeaders);
 
-            yt.DB_Insert(browseId, data, DB_filter.ARTIST);
 
-            return data;
+            if (data != null)
+            {
+                if (data.ContainsKey("header") && data.ContainsKey("sections"))
+                {
+                    yt.DB_Insert(browseId, data, DB_filter.ARTIST);
+                    return data;
+                }
+            }
+
+
+            return [];
         }
 
         public async Task<JsonObject> FetchHomeSection(string? continuationToken = null)

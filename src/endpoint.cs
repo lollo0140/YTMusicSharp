@@ -58,6 +58,9 @@ namespace YoutubeMusic
 
 
 
+        public string downloadPath {get; private set;}
+
+
         //endpoints: -----------------
         public Account AccountEndpoint { get; }
         public Search SearchEndpoint { get; }
@@ -80,6 +83,8 @@ namespace YoutubeMusic
             Directory.CreateDirectory(cachePath);
             Directory.CreateDirectory(Path.Combine(cachePath, "cachedvideos"));
 
+            downloadPath = Path.Combine(this.workspacePath, "downloaded");
+
             List<string> cachePaths = [];
 
             cachePaths.Add(Path.Combine(this.workspacePath, "cache", "albums.json"));
@@ -87,7 +92,7 @@ namespace YoutubeMusic
             cachePaths.Add(Path.Combine(this.workspacePath, "cache", "artists.json"));
             cachePaths.Add(Path.Combine(this.workspacePath, "cache", "library.json"));
             cachePaths.Add(Path.Combine(this.workspacePath, "cache", "cachedSongs.json"));
-            cachePaths.Add(Path.Combine(this.workspacePath, "cache", "downloaded.json"));
+
 
 
             cachePaths.ForEach(P =>
@@ -128,6 +133,13 @@ namespace YoutubeMusic
 
             ytWriteLine("api ready to use");
         }
+
+
+        public void SetDownloadPath(string path)
+        {
+            downloadPath = path;
+        }
+
 
         private void ytWriteLine(string content)
         {
@@ -314,6 +326,37 @@ namespace YoutubeMusic
             }
 
             return "";
+        }
+
+
+        //download
+        public async Task SaveVideoPermanent(string id)
+        {
+
+            string path = await GetYTAudioById(id);
+
+
+            ytWriteLine($"saving {id} from {path}");
+
+            var bytes = File.ReadAllBytes(path);
+
+            File.WriteAllBytes(downloadPath, bytes);
+
+        }
+
+        public async Task SaveVideoPermanent(string id, string path)
+        {
+            string streamPath = await GetYTAudioById(id);
+
+            ytWriteLine($"saving {id} from {streamPath}");
+
+            var bytes = File.ReadAllBytes(streamPath);
+
+            if (Directory.Exists(path))
+            {
+                string _ = Path.Join(path, $"{id}.webm");
+                File.WriteAllBytes(_, bytes);
+            }
         }
 
     }
