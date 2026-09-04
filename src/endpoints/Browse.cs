@@ -27,7 +27,7 @@ namespace YoutubeMusic
             string name = data?["data"]?["title"]?.GetValue<string>() ?? "";
             JsonArray thumbnails = [data?["data"]?["thumbnails"]?[0]?.GetValue<string>(), data?["data"]?["thumbnails"]?[1]?.GetValue<string>()];
 
-            JsonArray artists = [data?["data"]?["artist"]];
+            JsonArray artists = [data?["data"]?["artist"]?.DeepClone()];
 
 
             foreach (JsonNode? item in (JsonArray?)data?["items"] ?? [])
@@ -51,11 +51,7 @@ namespace YoutubeMusic
 
             if (data != null)
             {
-                if (data.ContainsKey("data") && data.ContainsKey("items"))
-                {
-                    yt.DB_Insert(browseId, data, DB_filter.ALBUM);
-                    return data;
-                }
+                return data;
             }
             return [];
         }
@@ -120,7 +116,7 @@ namespace YoutubeMusic
             JsonArray thumbnails = [data?["data"]?["thumbnails"]?[0]?.GetValue<string>(), data?["data"]?["thumbnails"]?[1]?.GetValue<string>()];
 
 
-            foreach (JsonNode? item in ((JsonArray?)data?["items"] ?? []))
+            foreach (JsonNode? item in (JsonArray?)data?["items"] ?? [])
             {
 
                 if (item != null)
@@ -139,11 +135,7 @@ namespace YoutubeMusic
 
             if (data != null)
             {
-                if (data.ContainsKey("data") && data.ContainsKey("items"))
-                {
-                    yt.DB_Insert(browseId, data, DB_filter.ALBUM);
-                    return data;
-                }
+                return data;
             }
 
             return [];
@@ -158,11 +150,7 @@ namespace YoutubeMusic
 
             if (data != null)
             {
-                if (data.ContainsKey("data") && data.ContainsKey("items"))
-                {
-                    yt.DB_Insert(browseId, data, DB_filter.PLAYLIST);
-                    return data;
-                }
+                return data;
             }
 
             return [];
@@ -175,11 +163,7 @@ namespace YoutubeMusic
 
             if (data != null)
             {
-                if (data.ContainsKey("header") && data.ContainsKey("sections"))
-                {
-                    yt.DB_Insert(browseId, data, DB_filter.ARTIST);
-                    return data;
-                }
+                return data;
             }
 
 

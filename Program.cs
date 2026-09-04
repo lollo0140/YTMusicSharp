@@ -11,10 +11,7 @@ string path = Path.Combine(
 );
 JsonNode headers = JsonNode.Parse(File.ReadAllText("./cookies.json"))!;
 
-YTMusicSharp ytClient = new YTMusicSharp(
-    workspacePath: path,
-    youtubHeaders: (JsonObject)headers
-);
+YTMusicSharp ytClient = new((JsonObject)headers);
 
 
-await ytClient.InteractionsEndpoint.RemoveVideoFromPlaylist("8rIa8GMkex4", "289F4A46DF0A30D2", "VLPLe6IBg_InZhI");
+await ytClient.DownloadVideoById("xdQIlVFqwVs", "./");

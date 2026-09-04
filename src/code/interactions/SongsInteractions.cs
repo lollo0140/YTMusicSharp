@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AngleSharp.Text;
 using DebugUtility;
 
 namespace YoutubeMusic
@@ -114,8 +113,6 @@ namespace YoutubeMusic
             parsedAddToPlaylist["content"] = parsedMainSec;
             parsedAddToPlaylist["topShelf"] = parsedTopShelf;
 
-            YTSharpDebugClass.WriteJsonToTestFile(parsedAddToPlaylist ?? [], 1);
-
             return parsedAddToPlaylist ?? [];
 
         }
@@ -211,7 +208,7 @@ namespace YoutubeMusic
                         ["setVideoId"] = setVideoId
                     }
                 },
-                ["playlistId"] = playlistId.StartsWith("VL") ? playlistId.ReplaceFirst("VL", "") : playlistId
+                ["playlistId"] = playlistId.StartsWith("VL") ? playlistId.Replace("VL", "") : playlistId
             };
 
 
