@@ -3,15 +3,22 @@ using System.Text.Json.Nodes;
 using DebugUtility;
 using YoutubeMusic;
 
-
-
-string path = Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "LOLLOMUSICX"
-);
+Console.Clear();
 JsonNode headers = JsonNode.Parse(File.ReadAllText("./cookies.json"))!;
 
 YTMusicSharp ytClient = new((JsonObject)headers);
 
 
-await ytClient.DownloadVideoById("xdQIlVFqwVs", "./");
+var A = await ytClient.BrowseEndpoint.FetchAlbumData("MPREb_iyLdAGYsOUR", true);
+
+foreach (var item in A["items"]!.AsArray())
+{
+    System.Console.WriteLine(item["title"]);
+    System.Console.WriteLine(item["album"]!["titleName"]);
+    System.Console.WriteLine(item["artists"]);
+    System.Console.WriteLine(item["type"]);
+    System.Console.WriteLine(item["id"]);
+
+    System.Console.WriteLine("\n\n\n");
+
+}

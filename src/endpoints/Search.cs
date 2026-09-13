@@ -14,14 +14,12 @@ namespace YoutubeMusic
 
         public async Task<JsonArray> GetSearchSugg(string input)
         {
-            string parsedString = input.Replace(" ", "-");
-            return await YTsearch.GetSearchSuggestions(parsedString, youtubHeaders);
+            return await YTsearch.GetSearchSuggestions(input, youtubHeaders);
         }
 
         public async Task<JsonObject> GenericSearch(string query)
         {
-            string parsedString = query.Replace(" ", "-");
-            return await YTsearch.Search(parsedString, youtubHeaders);
+            return await YTsearch.Search(query, youtubHeaders);
         }
 
         public async Task<JsonObject> SpecificSearch(string query, ContentType contentType)
@@ -31,11 +29,26 @@ namespace YoutubeMusic
             {
                 return [];
             }
-            string parsedString = query.Replace(" ", "-");
-            return await YTsearch.SpecificSearch(parsedString, youtubHeaders, contentType: contentType);
+            return await YTsearch.SpecificSearch(query, youtubHeaders, contentType: contentType);
 
         }
 
+        public async Task<JsonObject> IncognitoSpecificSearch(string query, ContentType contentType)
+        {
+            if (contentType == ContentType.Text)
+            {
+                return [];
+            }
+            return await YTsearch.SpecificIncognitoSearch(query, contentType);
+        }
+
+        public async Task<JsonObject?> SearchMatchingTrack(string title,
+        string firstArtistName,
+        string albumName = "",
+        bool isExplicit = true)
+        {
+            return await YTsearch.SearchMatchingTrack(title, firstArtistName, albumName, isExplicit);
+        }
 
     }
 }

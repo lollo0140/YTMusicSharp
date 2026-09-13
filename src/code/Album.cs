@@ -63,15 +63,114 @@ namespace YoutubeMusic
 
 
 
-            return parsedAlbum;
+            return FixMissingData(parsedAlbum);
         }
 
+        private static JsonObject FixMissingData(JsonObject parsedAlbum)
+        {
+            JsonObject albumNode = new()
+            {
+                ["brosweId"] = parsedAlbum?["data"]?["brosweId"]?.GetValue<string>() ?? "",
+                ["titleName"] = parsedAlbum?["data"]?["title"]?.GetValue<string>() ?? ""
+            };
 
 
 
+            JsonObject artistNode = new()
+            {
+                ["artistName"] = parsedAlbum?["data"]?["artist"]?["name"]?.GetValue<string>() ?? "",
+                ["artistId"] = parsedAlbum?["data"]?["artist"]?["browseId"]?.GetValue<string>() ?? ""
+            };
 
 
+            JsonArray thumbnailsNode = (JsonArray?)parsedAlbum?["data"]?["thumbnails"]?.DeepClone() ?? [];
 
+            for (int i = 0; i < parsedAlbum?["items"]?.AsArray().Count; i++)
+            {
+                bool artistIsNull = parsedAlbum?["items"]?[i]?["artists"]?[0]?["artistName"] == null;
+                bool artistIdIsNull = parsedAlbum?["items"]?[i]?["artists"]?[0]?["artistId"] == null;
+
+
+                if (parsedAlbum?["items"]?[i]?["artists"]?.AsArray().Count < 1)
+                {
+                    parsedAlbum?["items"]?[i]?["artists"]?.AsArray().Add(artistNode.DeepClone());
+                }
+
+
+                parsedAlbum?["items"]?[i]?["artists"]?[0] = artistNode.DeepClone();
+
+
+                parsedAlbum?["items"]?[i]?["thumbnails"] = thumbnailsNode.DeepClone();
+                parsedAlbum?["items"]?[i]?["album"] = albumNode.DeepClone();
+            }
+
+            return parsedAlbum ?? [];
+
+        }
+
+        //other
+
+        private record AlbumElement(JsonObject Value, int Index, bool ToReplace);
+
+        internal static async Task<JsonArray> FilterTracks(JsonObject parsedAlbum)
+        {
+            JsonArray items = parsedAlbum?["items"]?.AsArray() ?? [];
+
+            AlbumElement[] albumElements = new AlbumElement[items.Count];
+
+            JsonObject albumNode = new()
+            {
+                ["brosweId"] = parsedAlbum?["data"]?["brosweId"]?.GetValue<string>() ?? "",
+                ["titleName"] = parsedAlbum?["data"]?["title"]?.GetValue<string>() ?? ""
+            };
+
+            string artistName = parsedAlbum?["data"]?["artist"]?["name"]?.GetValue<string>() ?? "";
+            string albumName = parsedAlbum?["data"]?["title"]?.GetValue<string>() ?? "";
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                bool isVideo = (items[i]?["type"]?.GetValue<string>() ?? "none").Equals("video");
+                albumElements[i] = new((JsonObject?)items[i] ?? [], i, isVideo);
+            }
+
+            var tasks = albumElements.Select(async el =>
+            {
+                if (!el.ToReplace)
+                {
+                    return (el.Index, Track: el.Value.DeepClone());
+                }
+
+                string title = el.Value?["title"]?.GetValue<string>() ?? "";
+                bool isExplicit = el.Value?["explicit"]?.GetValue<bool>() ?? false;
+
+                var track = await YTsearch.SearchMatchingTrack(
+                    title,
+                    artistName,
+                    albumName: albumName,
+                    isExplicit: isExplicit
+                );
+
+                if (track == null || !track.ContainsKey("id"))
+                {
+                    return (el.Index, Track: el.Value!.DeepClone());
+                }
+
+                track?["album"] = albumNode.DeepClone();
+                // System.Console.WriteLine(track);
+
+                return (el.Index, Track: track?.DeepClone());
+            });
+
+            var results = await Task.WhenAll(tasks);
+
+
+            foreach (var (index, track) in results)
+            {
+                items[index] = track;
+            }
+
+            return items;
+        }
 
 
         //parsing

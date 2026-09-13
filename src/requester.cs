@@ -98,7 +98,7 @@ namespace YoutubeMusic
 
         }
 
-        internal static async Task<JsonObject> PostRequest(string endpointUrl, JsonObject cookies, JsonNode payload)
+        internal static async Task<JsonObject> PostRequest(string endpointUrl, JsonObject cookies, JsonNode payload, bool noAuth = false)
         {
             using var client = new HttpClient();
             var headers = GenerateHeaders(cookies);
@@ -113,14 +113,15 @@ namespace YoutubeMusic
             var request = new HttpRequestMessage(HttpMethod.Post, URL + endpointUrl);
             request.Content = new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json");
 
-
-
-            foreach (var header in headers.AsObject())
+            if (!noAuth)
             {
-                // Alcuni header vanno nel contenuto, altri nel messaggio
-                if (header.Key == "Content-Type") continue;
+                
+                foreach (var header in headers.AsObject())
+                {
+                    if (header.Key == "Content-Type") continue;
 
-                request.Headers.TryAddWithoutValidation(header.Key, header.Value?.ToString());
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value?.ToString());
+                }
             }
 
 

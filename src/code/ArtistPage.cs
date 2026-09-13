@@ -77,9 +77,23 @@ namespace YoutubeMusic
 
                 JsonArray? description = (JsonArray?)sectionHeader?["description"]?["runs"];
 
-                parsedHeader["headerDescription"] = description?[0]?["text"]?.GetValue<string>() + description?[1]?["text"]?.GetValue<string>() + $")";
 
-                parsedHeader["wikipediaLink"] = description?[1]?["text"]?.GetValue<string>() ?? "";
+
+                parsedHeader["headerDescription"] = "";
+                parsedHeader["wikipediaLink"] = "";
+
+                //  if has description
+                if (description?.Count > 1)
+                {
+                    parsedHeader["headerDescription"] = description?[0]?["text"]?.GetValue<string>() + description?[1]?["text"]?.GetValue<string>() + $")";
+
+                    parsedHeader["wikipediaLink"] = description?[1]?["text"]?.GetValue<string>() ?? "";
+                } else if (description?.Count > 0)
+                {
+                    parsedHeader["headerDescription"] = description?[0]?["text"]?.GetValue<string>();
+                }
+
+
 
 
                 JsonArray? headerImgs = (JsonArray?)sectionHeader?["thumbnail"]?["musicThumbnailRenderer"]?["thumbnail"]?["thumbnails"];

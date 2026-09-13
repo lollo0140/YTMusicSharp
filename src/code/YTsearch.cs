@@ -304,5 +304,120 @@ namespace YoutubeMusic
         }
 
 
+        internal static async Task<JsonObject> SpecificIncognitoSearch(string input,
+                                                              ContentType contentType = ContentType.All
+                                                              )
+        {
+
+            string Type = RequestParams.GetRightParameter(contentType);
+
+            JsonObject? C = [];
+
+
+            var payload = new JsonObject();
+
+            payload["query"] = input;
+            payload["params"] = Type;
+
+            JsonObject result = await Requester.PostRequest(endpointUrl: "search", cookies: C, payload: payload, noAuth: true);
+
+
+
+
+            JsonObject parsedResult = new JsonObject();
+
+            JsonArray? itemList = (JsonArray?)result?["contents"]?["tabbedSearchResultsRenderer"]?["tabs"]?[0]?["tabRenderer"]?["content"]?["sectionListRenderer"]?["contents"]?[1]?["musicShelfRenderer"]?["contents"];
+
+
+            if (itemList != null)
+            {
+                JsonArray parsedList = [];
+
+                foreach (JsonObject? listItem in itemList)
+                {
+                    if (listItem != null)
+                    {
+                        parsedList.Add(Parsing.ParseMusicResponsiveListItemRenderer((JsonObject)listItem?["musicResponsiveListItemRenderer"]!));
+                    }
+
+
+                }
+
+
+
+                parsedResult["results"] = parsedList;
+            }
+            else
+            {
+                parsedResult["results"] = new JsonArray();
+            }
+
+
+
+            // File.WriteAllText("./test2.json", JsonSerializer.Serialize(result));
+
+            return parsedResult;
+
+        }
+
+        private record Matching(JsonObject Data, int Score);
+
+        internal static async Task<JsonObject> SearchMatchingTrack(
+        string title,
+        string firstArtistName,
+        string albumName = "",
+        bool isExplicit = true)
+        {
+
+            string inputString = $"{title} {firstArtistName} {albumName}";
+
+            JsonObject traks = await SpecificIncognitoSearch(inputString, ContentType.Track);
+
+            Matching? matching = new([], Int16.MinValue);
+
+            foreach (JsonObject item in (traks?["results"]?.AsArray() ?? []).Cast<JsonObject>())
+            {
+
+                string itemTitle = (item?["title"]?.GetValue<string>() ?? "").ToLower();
+                string itemAlbumName = (item?["album"]?["titleName"]?.GetValue<string>() ?? "").ToLower();
+                string itemArtistName = (item?["artists"]?[0]?["artistName"]?.GetValue<string>() ?? "").ToLower();
+
+                int score = 0;
+
+                if (title.Equals(itemTitle, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    score += 10;
+                } else if (title.Contains(itemTitle, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    score += 5;
+                }
+
+                if (!title.Equals(albumName))
+                if (albumName.Equals(itemAlbumName, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    score += 10;
+                } else if (albumName.Contains(itemAlbumName, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    score += 5;
+                };
+
+                if (firstArtistName.Equals(itemArtistName, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    score += 10;
+                } else if (firstArtistName.Contains(itemArtistName, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    score += 5;
+                }
+
+                if ((item?["explicit"]?.GetValue<bool>() ?? false) == isExplicit) score += 5;
+
+                if (score > matching.Score) matching = new(item ?? [], score);
+
+            }
+
+            return matching.Data;
+
+        }
+
     }
 }
