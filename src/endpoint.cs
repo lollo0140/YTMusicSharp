@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -89,6 +90,83 @@ namespace YoutubeMusic
             System.Console.WriteLine("yt log---------------------");
             System.Console.WriteLine(content);
             System.Console.WriteLine("---------------------------");
+        }
+
+
+        public async Task<JsonObject> GetLyrics(
+            string name,
+            string artist,
+            string? album = null,
+            int? duration = null
+        )
+        {
+
+            var queryParams = new Dictionary<string, string>
+            {
+                { "track_name", name },
+                { "artist_name", artist },
+            };
+
+            if (album != null)
+            {
+                queryParams.Add("album_name", album);
+            }
+
+            if (duration != null)
+            {
+                queryParams.Add("duration", duration.ToString()!);
+            }
+
+
+            using var content = new FormUrlEncodedContent(queryParams);
+            string queryString = await content.ReadAsStringAsync();
+            string completeQuery = $"https://lrclib.net/api/get?{queryString}";
+
+            var res = await new HttpClient().GetAsync(completeQuery);
+
+            JsonObject? rBody = (JsonObject?)JsonNode.Parse(await res.Content.ReadAsStringAsync());
+
+            if (rBody == null) return [];
+
+            string syncLyrics = rBody?["syncedLyrics"]?.GetValue<string>() ?? "";
+
+
+            List<string> sliced = [.. syncLyrics.Split("\n")];
+
+            JsonArray formatted = [];
+
+            sliced.ForEach(x =>
+            {
+
+                int start = 1;
+                int end = x.IndexOf(']', start);
+
+                string timestamp = x.Substring(start, end - start);
+
+                string content = x[(end + 2)..];
+
+
+                if (TimeSpan.TryParseExact(timestamp, @"mm\:ss\.ff", CultureInfo.InvariantCulture, out TimeSpan timeSpan))
+                {
+                    double totalSeconds = timeSpan.TotalSeconds; // Es: 9.35
+
+                    JsonObject node = new()
+                    {
+                        ["timestamp"] = timestamp,
+                        ["seconds"] = (int)totalSeconds,
+                        ["content"] = content
+                    };
+                }
+            });
+
+
+            JsonObject finalResult = new()
+            {
+                ["plainLyrics"] = rBody?["plainLyrics"]?.GetValue<string>() ?? "",
+                ["syncedLyrics"] = formatted
+            };
+
+            return finalResult;
         }
 
         public async Task DownloadVideoById(string id, string path)

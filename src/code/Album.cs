@@ -257,14 +257,14 @@ namespace YoutubeMusic
 
             parsedAlbumData["saved"] = data?["buttons"]?[0]?["toggleButtonRenderer"]?["isToggled"]?.GetValue<bool>() ?? false;
             parsedAlbumData["saveParam"] = data?["buttons"]?[0]?["toggleButtonRenderer"]?["defaultServiceEndpoint"]?["likeEndpoint"]?["target"]?["playlistId"]?.GetValue<string>();
-            parsedAlbumData["shareLink"] = $"https://music.youtube.com/playlist?list={parsedAlbumData["saveParam"]!.GetValue<string>() ?? ""}";
+            parsedAlbumData["shareLink"] = $"https://music.youtube.com/playlist?list={parsedAlbumData?["saveParam"]?.GetValue<string>() ?? ""}";
 
             //buttons -------------------
 
 
             //title ----------------------
 
-            parsedAlbumData["title"] = data?["title"]?["runs"]?[0]?["text"]?.GetValue<string>();
+            parsedAlbumData!["title"] = data?["title"]?["runs"]?[0]?["text"]?.GetValue<string>() ?? "";
 
             //title ----------------------
 

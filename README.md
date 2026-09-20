@@ -22,11 +22,9 @@ A C# library for interacting with the YouTube Music API. This project provides a
 ```csharp
 using YoutubeMusic;
 
-string workspacePath = "your/workspace/path";
 JsonObject headers = JsonNode.Parse(File.ReadAllText("./cookies.json"))!;
 
 YTMusicSharp ytClient = new YTMusicSharp(
-    workspacePath: workspacePath,
     youtubHeaders: headers
 );
 
