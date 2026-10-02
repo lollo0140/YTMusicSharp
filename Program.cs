@@ -1,12 +1,17 @@
-﻿using System.Text.Json;
-using System.Text.Json.Nodes;
-using DebugUtility;
-using YoutubeMusic;
+﻿// using System.Text.Json;
+// using System.Text.Json.Nodes;
+// using DebugUtility;
 
-Console.Clear();
-JsonNode headers = JsonNode.Parse(File.ReadAllText("./cookies.json"))!;
+// using YoutubeMusic;
 
-YTMusicSharp ytClient = new((JsonObject)headers);
+// Console.Clear();
+// JsonNode headers = JsonNode.Parse(File.ReadAllText("./cookies.json"))!;
+
+// YTMusicSharp ytClient = new((JsonObject)headers);
 
 
-var a = await ytClient.GetLyrics("c section", "lucy bedroque");
+
+
+// var a = await ytClient.BrowseEndpoint.FetchArtistPage("UCFIT0GqFr2l356NmQ-NykBw");
+
+// System.Console.WriteLine(a);

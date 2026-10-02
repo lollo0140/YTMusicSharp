@@ -47,6 +47,11 @@ namespace YoutubeMusic
     }
 
 
+    public enum AudioQuality
+    {
+        LOW,
+        HIGH
+    }
 
     public class YTMusicSharp
     {
@@ -60,6 +65,7 @@ namespace YoutubeMusic
         public Browse BrowseEndpoint { get; }
         public Library LibraryEndpoint { get; }
         public Interactions InteractionsEndpoint { get; }
+
 
 
         //initialization
@@ -91,6 +97,9 @@ namespace YoutubeMusic
             System.Console.WriteLine(content);
             System.Console.WriteLine("---------------------------");
         }
+
+
+
 
 
         public async Task<JsonObject> GetLyrics(
@@ -126,6 +135,7 @@ namespace YoutubeMusic
 
             JsonObject? rBody = (JsonObject?)JsonNode.Parse(await res.Content.ReadAsStringAsync());
 
+
             if (rBody == null) return [];
 
             string syncLyrics = rBody?["syncedLyrics"]?.GetValue<string>() ?? "";
@@ -137,6 +147,11 @@ namespace YoutubeMusic
 
             sliced.ForEach(x =>
             {
+
+                if (x.Length < 2)
+                {
+                    return;
+                }
 
                 int start = 1;
                 int end = x.IndexOf(']', start);
@@ -156,6 +171,7 @@ namespace YoutubeMusic
                         ["seconds"] = (int)totalSeconds,
                         ["content"] = content
                     };
+                    formatted.Add(node);
                 }
             });
 
@@ -169,7 +185,7 @@ namespace YoutubeMusic
             return finalResult;
         }
 
-        public async Task DownloadVideoById(string id, string path)
+        public async Task DownloadVideoById(string id, string path, AudioQuality audioQuality = AudioQuality.HIGH)
         {
             var videoUrl = $"https://youtube.com/watch?v={id}";
 
@@ -186,7 +202,8 @@ namespace YoutubeMusic
 
             var options = new OptionSet
             {
-                Format = "bestaudio[ext=webm]/bestaudio",
+                Format = audioQuality == AudioQuality.HIGH ? "bestaudio[ext=webm]/bestaudio" :
+                                                             "worstaudio[ext=webm]/worstaudio",
                 Output = path
             };
 

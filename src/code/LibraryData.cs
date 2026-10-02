@@ -242,6 +242,10 @@ namespace YoutubeMusic
             return library;
         }
 
+        // internal static async Task<JsonArray> GetYoutubeHystory()
+        // {
+
+        // }
 
     }
 }

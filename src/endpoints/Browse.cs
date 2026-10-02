@@ -70,6 +70,21 @@ namespace YoutubeMusic
             return [];
         }
 
+        public async Task<JsonArray> FetchArtistPopularTracks(string browseId, string Params)
+        {
+
+            var data = await ArtistPage.FetchArtistSongs(browseId, Params, youtubHeaders);
+
+
+            if (data != null)
+            {
+                return data;
+            }
+
+
+            return [];
+        }
+
         public async Task<JsonObject> FetchHomeSection(string? continuationToken = null)
         {
 

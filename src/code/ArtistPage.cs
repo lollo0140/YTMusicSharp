@@ -88,7 +88,8 @@ namespace YoutubeMusic
                     parsedHeader["headerDescription"] = description?[0]?["text"]?.GetValue<string>() + description?[1]?["text"]?.GetValue<string>() + $")";
 
                     parsedHeader["wikipediaLink"] = description?[1]?["text"]?.GetValue<string>() ?? "";
-                } else if (description?.Count > 0)
+                }
+                else if (description?.Count > 0)
                 {
                     parsedHeader["headerDescription"] = description?[0]?["text"]?.GetValue<string>();
                 }
@@ -173,8 +174,27 @@ namespace YoutubeMusic
             {
 
 
+                var runs = section?["title"]?["runs"]?[0];
 
-                parsedSection["title"] = section?["title"]?["runs"]?[0]?["text"]?.GetValue<string>();
+                parsedSection["title"] = runs?["text"]?.GetValue<string>();
+
+                JsonObject navEndpoint = runs?["navigationEndpoint"]?["browseEndpoint"] as JsonObject ?? [];
+
+
+                if (navEndpoint != null)
+                {
+                    if (navEndpoint.ContainsKey("browseId"))
+                    {
+                        parsedSection["browseId"] = navEndpoint?["browseId"]?.GetValue<string>();
+                    }
+
+                    if (navEndpoint!.ContainsKey("params"))
+                    {
+                        parsedSection["params"] = navEndpoint?["params"]?.GetValue<string>();
+                    }
+
+                }
+
 
 
                 JsonArray items = [];
@@ -229,6 +249,43 @@ namespace YoutubeMusic
             }
 
             return parsedSection;
+
+        }
+
+
+
+        internal static async Task<JsonArray> FetchArtistSongs(string BrowseId, string Params, JsonObject? headers)
+        {
+            JsonObject? C;
+
+            if (headers != null)
+            {
+                C = headers;
+            }
+            else
+            {
+                C = new JsonObject();
+            }
+
+            var payload = new JsonObject();
+
+            payload["browseId"] = BrowseId;
+            payload["params"] = Params;
+            JsonObject result = await Requester.PostRequest(endpointUrl: "browse", cookies: C, payload: payload);
+
+
+            var elements = result["contents"]?["singleColumnBrowseResultsRenderer"]?["tabs"]?[0]?["tabRenderer"]?["content"]?["sectionListRenderer"]?["contents"]?[0]?["musicPlaylistShelfRenderer"]?["contents"]?.AsArray() ?? [];
+
+            JsonArray tracks = [];
+
+            foreach (var track in elements)
+            {
+                var parsed = Parsing.ParseMusicResponsiveListItemRenderer((JsonObject?)track?["musicResponsiveListItemRenderer"]!);
+
+                tracks.Add(parsed.DeepClone());
+            }
+
+            return tracks;
 
         }
 
